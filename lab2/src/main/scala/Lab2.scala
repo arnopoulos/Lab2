@@ -88,10 +88,17 @@ object Lab2 extends jsy.util.JsyApplication {
     /* Some helper functions for convenience. */
     def eToVal(e: Expr): Expr = eval(env, e)
     
-    def eToNumExp(e:Expr): Expr = e match {
-      case B(b) => if (b) N(1) else N(0)
-      case N(n) => N(n)
+    def eToNum(e:Expr):Double = e match {
+      case B(b) => if (b) 1 else 0
+      case N(n) => n
       case S(s) => throw new UnsupportedOperationException
+      case _ => throw new UnsupportedOperationException
+    }
+    
+    def eToBool(e:Expr):Boolean = e match {
+      case B(b) => b
+      case N(n) => if (n == 0) false else true
+      case S(s) => if (s == "") false else true
       case _ => throw new UnsupportedOperationException
     }
 
@@ -105,22 +112,22 @@ object Lab2 extends jsy.util.JsyApplication {
         val arg2 = eToVal(e2)
         bop match {
           //Logical operators
-          case And => B(toBoolean(arg1) && toBoolean(arg2))
-          case Or => B(toBoolean(arg1) || toBoolean(arg2))
-          case Eq => B(toNumber(arg1) == toNumber(arg2))
-          case Ne => B(toNumber(arg1) != toNumber(arg2))
-          case Lt => B(toNumber(arg1) < toNumber(arg2))
-          case Le => B(toNumber(arg1) <= toNumber(arg2))
-          case Gt => B(toNumber(arg1) > toNumber(arg2))
-          case Ge => B(toNumber(arg1) >= toNumber(arg2))
+          case And => B(eToBool(arg1) && eToBool(arg2))
+          case Or => B(eToBool(arg1) || eToBool(arg2))
+          case Eq => B(eToNum(arg1) == eToNum(arg2))
+          case Ne => B(eToNum(arg1) != eToNum(arg2))
+          case Lt => B(eToNum(arg1) < eToNum(arg2))
+          case Le => B(eToNum(arg1) <= eToNum(arg2))
+          case Gt => B(eToNum(arg1) > eToNum(arg2))
+          case Ge => B(eToNum(arg1) >= eToNum(arg2))
           
           //Arithmetic operators
-          case Plus => N(toNumber(arg1) + toNumber(arg2))
-          case Minus => N(toNumber(arg1) - toNumber(arg2))
-          case Times => N(toNumber(arg1) * toNumber(arg2))
+          case Plus => N(eToNum(arg1) + eToNum(arg2))
+          case Minus => N(eToNum(arg1) - eToNum(arg2))
+          case Times => N(eToNum(arg1) * eToNum(arg2))
           case Div => {
-            val da1 = toNumber(arg1)
-            val da2 = toNumber(arg2)
+            val da1 = eToNum(arg1)
+            val da2 = eToNum(arg2)
             if (da2 != 0) N(da1/da2)
             else {
               if (da1 > 0) N(Double.PositiveInfinity)
@@ -128,6 +135,11 @@ object Lab2 extends jsy.util.JsyApplication {
               else N(Double.NaN)
             }
           } case _ => throw new UnsupportedOperationException
+        }
+      } case Unary(uop,e1) => {
+        uop match {
+          case Neg => N(-eToNum(e1))
+          case Not => B(!eToBool(e1))
         }
       }
       case N(_) | B(_) | S(_) | Undefined => e
