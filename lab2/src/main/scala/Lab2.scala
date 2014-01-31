@@ -87,13 +87,50 @@ object Lab2 extends jsy.util.JsyApplication {
   def eval(env: Env, e: Expr): Expr = {
     /* Some helper functions for convenience. */
     def eToVal(e: Expr): Expr = eval(env, e)
+    
+    def eToNumExp(e:Expr): Expr = e match {
+      case B(b) => if (b) N(1) else N(0)
+      case N(n) => N(n)
+      case S(s) => throw new UnsupportedOperationException
+      case _ => throw new UnsupportedOperationException
+    }
 
     e match {
       /* Base Cases */
       
       /* Inductive Cases */
       case Print(e1) => println(pretty(eToVal(e1))); Undefined
-
+      case Binary(bop,e1,e2) => {
+        val arg1 = eToVal(e1)
+        val arg2 = eToVal(e2)
+        bop match {
+          //Logical operators
+          case And => B(toBoolean(arg1) && toBoolean(arg2))
+          case Or => B(toBoolean(arg1) || toBoolean(arg2))
+          case Eq => B(toNumber(arg1) == toNumber(arg2))
+          case Ne => B(toNumber(arg1) != toNumber(arg2))
+          case Lt => B(toNumber(arg1) < toNumber(arg2))
+          case Le => B(toNumber(arg1) <= toNumber(arg2))
+          case Gt => B(toNumber(arg1) > toNumber(arg2))
+          case Ge => B(toNumber(arg1) >= toNumber(arg2))
+          
+          //Arithmetic operators
+          case Plus => N(toNumber(arg1) + toNumber(arg2))
+          case Minus => N(toNumber(arg1) - toNumber(arg2))
+          case Times => N(toNumber(arg1) * toNumber(arg2))
+          case Div => {
+            val da1 = toNumber(arg1)
+            val da2 = toNumber(arg2)
+            if (da2 != 0) N(da1/da2)
+            else {
+              if (da1 > 0) N(Double.PositiveInfinity)
+              else if (da1 < 0) N(Double.NegativeInfinity)
+              else N(Double.NaN)
+            }
+          } case _ => throw new UnsupportedOperationException
+        }
+      }
+      case N(_) | B(_) | S(_) | Undefined => e
       case _ => throw new UnsupportedOperationException
     }
   }
