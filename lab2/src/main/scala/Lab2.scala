@@ -107,41 +107,7 @@ object Lab2 extends jsy.util.JsyApplication {
       
       /* Inductive Cases */
       case Print(e1) => println(pretty(eToVal(e1))); Undefined
-      case Binary(bop,e1,e2) => {
-        val arg1 = eToVal(e1)
-        val arg2 = eToVal(e2)
-        bop match {
-          //Logical operators
-          case And => B(eToBool(arg1) && eToBool(arg2))
-          case Or => B(eToBool(arg1) || eToBool(arg2))
-          case Eq => B(eToNum(arg1) == eToNum(arg2))
-          case Ne => B(eToNum(arg1) != eToNum(arg2))
-          case Lt => B(eToNum(arg1) < eToNum(arg2))
-          case Le => B(eToNum(arg1) <= eToNum(arg2))
-          case Gt => B(eToNum(arg1) > eToNum(arg2))
-          case Ge => B(eToNum(arg1) >= eToNum(arg2))
-          
-          //Arithmetic operators
-          case Plus => N(eToNum(arg1) + eToNum(arg2))
-          case Minus => N(eToNum(arg1) - eToNum(arg2))
-          case Times => N(eToNum(arg1) * eToNum(arg2))
-          case Div => {
-            val da1 = eToNum(arg1)
-            val da2 = eToNum(arg2)
-            if (da2 != 0) N(da1/da2)
-            else {
-              if (da1 > 0) N(Double.PositiveInfinity)
-              else if (da1 < 0) N(Double.NegativeInfinity)
-              else N(Double.NaN)
-            }
-          } case _ => throw new UnsupportedOperationException
-        }
-      } case Unary(uop,e1) => {
-        uop match {
-          case Neg => N(-eToNum(e1))
-          case Not => B(!eToBool(e1))
-        }
-      }
+      
       case N(_) | B(_) | S(_) | Undefined => e
       case _ => throw new UnsupportedOperationException
     }
