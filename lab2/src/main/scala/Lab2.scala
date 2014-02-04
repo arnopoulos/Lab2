@@ -147,8 +147,9 @@ object Lab2 extends jsy.util.JsyApplication {
           case Neg => N(-toNumber(eToVal(e1)))
           case Not => B(!toBoolean(eToVal(e1)))
         }
-      } case ConstDecl(str,e1,e2) => throw new UnsupportedOperationException
-      case Var(str) => throw new UnsupportedOperationException
+      } case ConstDecl(str,e1,e2) => {
+        eval(env + (str->eToVal(e1)),e2)
+      } case Var(str) => env(str)
       case N(_) | B(_) | S(_) | Undefined => e
       case _ => throw new UnsupportedOperationException
     }
