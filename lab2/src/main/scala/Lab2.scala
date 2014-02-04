@@ -63,6 +63,12 @@ object Lab2 extends jsy.util.JsyApplication {
     require(isValue(v))
     (v: @unchecked) match {
       case N(n) => n
+      case B(b) => if (b) 1 else 0
+      case S(s) => try {
+        s.toDouble
+      } catch {
+        case _ => Double.NaN
+      } case Undefined => Double.NaN
       case _ => throw new UnsupportedOperationException
     }
   }
@@ -71,6 +77,8 @@ object Lab2 extends jsy.util.JsyApplication {
     require(isValue(v))
     (v: @unchecked) match {
       case B(b) => b
+      case N(n) => n != 0
+      case S(s) => s != ""
       case _ => throw new UnsupportedOperationException
     }
   }
@@ -79,6 +87,8 @@ object Lab2 extends jsy.util.JsyApplication {
     require(isValue(v))
     (v: @unchecked) match {
       case S(s) => s
+      case B(b) => b.toString
+      case N(n) => n.toString
       case Undefined => "undefined"
       case _ => throw new UnsupportedOperationException
     }
@@ -87,27 +97,58 @@ object Lab2 extends jsy.util.JsyApplication {
   def eval(env: Env, e: Expr): Expr = {
     /* Some helper functions for convenience. */
     def eToVal(e: Expr): Expr = eval(env, e)
-    
-    def eToNum(e:Expr):Double = e match {
-      case B(b) => if (b) 1 else 0
-      case N(n) => n
-      case S(s) => throw new UnsupportedOperationException
-      case _ => throw new UnsupportedOperationException
-    }
-    
-    def eToBool(e:Expr):Boolean = e match {
-      case B(b) => b
-      case N(n) => if (n == 0) false else true
-      case S(s) => if (s == "") false else true
-      case _ => throw new UnsupportedOperationException
-    }
 
     e match {
       /* Base Cases */
       
       /* Inductive Cases */
       case Print(e1) => println(pretty(eToVal(e1))); Undefined
-      
+      case If(e1,e2,e3) => if (toBoolean(eToVal(e1))) eToVal(e2) else eToVal(e3)
+      case Binary(bop,e1,e2) => {
+        val retE1 = eToVal(e1)
+        val retE2 = eToVal(e2)
+        bop match {
+          //Logical Operators
+          case Or => if (toBoolean(retE1)) retE1 else retE2
+          case And => if (!toBoolean(retE1)) retE1 else retE2
+          case Eq => B(retE1 == retE2)
+          case Ne => B(retE1 != retE2)
+          case Lt => B(toNumber(retE1) < toNumber(retE2))
+          case Le => B(toNumber(retE1) <= toNumber(retE2))
+          case Gt => B(toNumber(retE1) > toNumber(retE2))
+          case Ge => B(toNumber(retE1) >= toNumber(retE2))
+          
+          //Arithmetic Operators
+          case Plus => {
+            (retE1,retE2) match {
+              case (S(_),_) | (_,S(_)) => S(toStr(retE1) + toStr(retE2))
+              case (_,_) => N(toNumber(retE1) + toNumber(retE2))
+            }
+          } case Minus => N(toNumber(retE1) - toNumber(retE2))
+          case Times => N(toNumber(retE1) * toNumber(retE2))
+          case Div => {
+            val arg1 = toNumber(retE1)
+            val arg2 = toNumber(retE2)
+            if (arg2 != 0) N(arg1 / arg2)
+            else {
+              if (arg1 > 0) N(Double.PositiveInfinity)
+              else if (arg1 < 0) N(Double.NegativeInfinity)
+              else N(Double.NaN)
+            }
+          } 
+          
+          case Seq => {
+            eToVal(e1)
+            eToVal(e2)
+          }
+        }
+      } case Unary(uop,e1) => {
+        uop match {
+          case Neg => N(-toNumber(eToVal(e1)))
+          case Not => B(!toBoolean(eToVal(e1)))
+        }
+      } case ConstDecl(str,e1,e2) => throw new UnsupportedOperationException
+      case Var(str) => throw new UnsupportedOperationException
       case N(_) | B(_) | S(_) | Undefined => e
       case _ => throw new UnsupportedOperationException
     }
