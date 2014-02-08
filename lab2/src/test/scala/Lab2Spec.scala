@@ -46,12 +46,28 @@ class ArithmeticSpec extends FlatSpec {
     val e3 = eval(Binary(Plus, e1, e2))
     assert(e3 === N(3))
   }
+  
+  "Plus" should "add two expresion values and return a string" in {
+    val e1 = N(1)
+    val e2 = S("string")
+    val e3 = eval(Binary(Plus, e1, e2))
+    val e4 = eval(Binary(Plus, e2, e1))
+    assert(e4 === S("string1"))
+    assert(e3 === S("1string"))
+  }
 
   "Minus" should "subtract two number values and return a number" in {
     val e1 = N(3)
     val e2 = N(1)
     val e3 = eval(Binary(Minus, e1, e2))
     assert(e3 === N(2))
+  }
+  
+  "Minus" should "subtract two expresions values and return NaN" in {
+    val e1 = N(3)
+    val e2 = S("string")
+    val e3 = eval(Binary(Minus, e1, e2))
+    assert(toNumber(e3).isNaN())
   }
 
   "Times" should "multiply two number values and return a number" in {
@@ -66,6 +82,13 @@ class ArithmeticSpec extends FlatSpec {
     val e2 = N(5)
     val e3 = eval(Binary(Div, e1, e2))
     assert(e3 === N(1.6))
+  }
+  
+  "Div" should "0/0 and return NaN" in {
+    val e1 = N(0)
+    val e2 = N(0)
+    val e3 = eval(Binary(Div, e1, e2))
+    assert(toNumber(e3).isNaN())
   }
 
   "Arithmetic Operators" should "produce non-intuitive solutions given differing expression types" in {
@@ -243,6 +266,12 @@ class UnarySpec extends FlatSpec {
     val e1 = N(5)
     val e2 = eval(Unary(Neg, e1))
     assert(e2 === N(-5))
+  } 
+  
+  "Neg" should "return the negation of the interpreted boolean value" in {
+    val e1 = B(true)
+    val e2 = eval(Unary(Neg, e1))
+    assert(e2 === N(-1))
   } 
   
   "Not" should "return the compliment of a boolean value" in {

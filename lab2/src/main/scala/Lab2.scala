@@ -67,7 +67,7 @@ object Lab2 extends jsy.util.JsyApplication {
 			case S(s) => try {
 				s.toDouble
 			} catch {
-				case _ => Double.NaN
+				case _:Throwable => Double.NaN
 			} case Undefined => Double.NaN
 			case _ => throw new UnsupportedOperationException
 		}
@@ -93,6 +93,13 @@ object Lab2 extends jsy.util.JsyApplication {
 			case _ => throw new UnsupportedOperationException
 		}
 	}
+	
+	def isEqual(e1:Expr, e2:Expr): Boolean = (e1,e2) match {
+	  case (S(s1),S(s2)) => s1 == s2
+	  case (B(b1),B(b2)) => b1 == b2
+	  case (N(n1),N(n2)) => n1 == n2
+	  case _ => false
+	}
 
 	def eval(env: Env, e: Expr): Expr = {
 		/* Some helper functions for convenience. */
@@ -103,32 +110,34 @@ object Lab2 extends jsy.util.JsyApplication {
 				case Print(e1) => println(pretty(eToVal(e1))); Undefined
 				case If(e1,e2,e3) => if (toBoolean(eToVal(e1))) eToVal(e2) else eToVal(e3)
 				case Binary(bop,e1,e2) => {
+					//retE1 and retE2 are the values of e1 and e2 after they have been evaluated
+					//Reminder: This will not work with assignment done within short circuit evaluation 
 					val retE1 = eToVal(e1)
 					val retE2 = eToVal(e2)
 					bop match {
 						//Logical Operators
-						case Or => if (toBoolean(retE1)) retE1 else retE2
-						case And => if (!toBoolean(retE1)) retE1 else retE2
-						case Eq => B((retE1 == retE2))
-						case Ne => B(retE1 != retE2)
+						case Or => if (toBoolean(retE1)) retE1 else retE2 //if the first value is not true return second value regardless of the value
+						case And => if (!toBoolean(retE1)) retE1 else retE2 //if the first value is false return it, regardless of what the value of the second value is
+						case Eq => B(isEqual(retE1,retE2)) //Checks if Expr's are equal
+						case Ne => B(!isEqual(retE1,retE2)) //Checks if Expr's are not equal
 						case Lt => (retE1,retE2) match {
-							case (S(_),S(_)) => B(toStr(retE1) < toStr(retE2))
+							case (S(_),S(_)) => B(toStr(retE1) < toStr(retE2)) //String comparison
 							case (_,_) => B(toNumber(retE1) < toNumber(retE2))
 						} case Le => (retE1,retE2) match {
-							case (S(_),S(_)) => B(toStr(retE1) <= toStr(retE2))
+							case (S(_),S(_)) => B(toStr(retE1) <= toStr(retE2)) //String comparison
 							case (_,_) => B(toNumber(retE1) <= toNumber(retE2))
 						} case Gt => (retE1,retE2) match {
-							case (S(_),S(_)) => B(toStr(retE1) > toStr(retE2))
+							case (S(_),S(_)) => B(toStr(retE1) > toStr(retE2)) //String comparison
 							case (_,_) => B(toNumber(retE1) > toNumber(retE2))
 						} case Ge => (retE1,retE2) match {
-							case (S(_),S(_)) => B(toStr(retE1) >= toStr(retE2))
+							case (S(_),S(_)) => B(toStr(retE1) >= toStr(retE2)) //String comparison
 							case (_,_) => B(toNumber(retE1) >= toNumber(retE2))
 						}
 
 						//Arithmetic Operators
 						case Plus => {
 							(retE1,retE2) match {
-								case (S(_),_) | (_,S(_)) => S(toStr(retE1) + toStr(retE2))
+								case (S(_),_) | (_,S(_)) => S(toStr(retE1) + toStr(retE2)) //If either argument is a string program should return a concatenated string
 								case (_,_) => N(toNumber(retE1) + toNumber(retE2))
 							}
 						} case Minus => N(toNumber(retE1) - toNumber(retE2))
@@ -140,11 +149,12 @@ object Lab2 extends jsy.util.JsyApplication {
 							else {
 								if (arg1 > 0) N(Double.PositiveInfinity)
 								else if (arg1 < 0) N(Double.NegativeInfinity)
-								else N(Double.NaN)
+								else N(Double.NaN) // Zero divided by zero should yield NaN
 							}
 						} 
 
 						case Seq => {
+							//Reminder: Think about for loops and how env will play a role
 							eToVal(e1)
 							eToVal(e2)
 						}
@@ -157,7 +167,7 @@ object Lab2 extends jsy.util.JsyApplication {
 				} case ConstDecl(str,e1,e2) => eval(env + (str->eToVal(e1)),e2) //Adds interpreted value of e1 to map with key str
 				case Var(str) => env(str); //Checks map for Expr with name str
 				case N(_) | B(_) | S(_) | Undefined => e //Base classes
-				case _ => throw new UnsupportedOperationException
+				case _ => throw new UnsupportedOperationException //Formality, the code should never reach here.
 		}
 	}
 
